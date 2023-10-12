@@ -1,3 +1,12 @@
+/*
+  Universidad del Valle de Guatemala
+  Computación paralela y distribuida
+  Proyecto#2
+
+  - Compilación: mpicc -o bruteforce2 bruteforce2.c -lcrypto -lssl
+  - Ejecución: mpirun -np 4 ./bruteforce2 -k <llave>
+*/
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,7 +41,7 @@ void encrypt(long key, char *ciph, int len){
   DES_ecb_encrypt((DES_cblock *)ciph, (DES_cblock *)ciph, &schedule, DES_ENCRYPT);
 }
 
-char search[] = " the ";
+char search[] = "es una prueba de";
 
 int tryKey(long key, char *ciph, int len){
   char temp[len+1];
@@ -106,6 +115,27 @@ int main(int argc, char *argv[]){
   MPI_Comm_size(comm, &N);
   MPI_Comm_rank(comm, &id);
 
+  double start_time, end_time; // Variables para medir el tiempo de ejecución
+  long encryptionKey = 123456L; // Valor predeterminado para la clave de encriptación
+
+  int option;
+
+  // Procesa las opciones de la línea de comandos
+  while ((option = getopt(argc, argv, "k:")) != -1) {
+    switch (option) {
+      case 'k':
+        encryptionKey = atol(optarg);
+        break;
+      default:
+        fprintf(stderr, "Uso: %s [-k key]\n", argv[0]);
+        MPI_Finalize();
+        exit(1);
+    }
+  }
+
+  // Inicia el contador de tiempo
+  start_time = MPI_Wtime();
+
   // Calcula el rango de claves que cada proceso MPI debe buscar
   int range_per_node = upper / N;
   mylower = range_per_node * id;
@@ -125,8 +155,6 @@ int main(int argc, char *argv[]){
       return 1;
     }
 
-    // Encripta el texto cargado usando una clave (por ejemplo, 42)
-    long encryptionKey = 42;
     encrypt(encryptionKey, text, textLength);
 
     // Guarda el texto encriptado en un archivo (por ejemplo, "encrypted.txt")
@@ -158,12 +186,16 @@ int main(int argc, char *argv[]){
     }
   }
 
+  // Termina el contador de tiempo
+  end_time = MPI_Wtime();
+
   if (id == 0) {
     MPI_Wait(&req, &st);
     decrypt(found, text, textLength);
 
     // Imprime el texto desencriptado y la clave de encriptación
     printf("%li %s\n", found, text);
+    printf("Tiempo de ejecución: %f segundos\n", end_time - start_time);
 
     // Guarda el texto desencriptado en un archivo (por ejemplo, "decrypted.txt")
     if (!saveTextToFile("decrypted.txt", text, textLength)) {
