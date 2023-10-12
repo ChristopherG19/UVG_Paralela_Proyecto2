@@ -31,8 +31,15 @@ int tryKey(long key, char *ciph, int len){
   memcpy(temp, ciph, len);
   temp[len]=0;
   decrypt(key, temp, len);
-  return strstr((char *)temp, search) != NULL;
+  
+  if (strstr((char *)temp, search) != NULL) {
+    printf("Clave encontrada: %li\n", key);
+    return 1;
+  }
+  
+  return 0;
 }
+
 
 int loadTextFromFile(const char *filename, char **text, int *length) {
   FILE *file = fopen(filename, "r");
