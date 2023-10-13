@@ -57,8 +57,7 @@ void encrypt(long key, char *ciph, int len){
     }
 }
 
-
-char search[] = "the";
+char search[] = "es una prueba de";
 
 int tryKey(long key, char *ciph, int len){
   char temp[len+1];
@@ -76,7 +75,7 @@ int tryKey(long key, char *ciph, int len){
 }
 
 int loadTextFromFile(const char *filename, char **text, int *length) {
-  FILE *file = fopen(filename, "rb");  // Abre el archivo en modo binario
+  FILE *file = fopen(filename, "r");
   if (file == NULL) {
     perror("Error al abrir el archivo");
     return 0;
@@ -96,28 +95,25 @@ int loadTextFromFile(const char *filename, char **text, int *length) {
   }
 
   // Lee el contenido del archivo en el texto
-  fread(*text, 1, *length, file);  // Lee el archivo sin interpretar terminaciones nulas
+  fread(*text, 1, *length, file);
   fclose(file);
 
   return 1;
 }
 
 int saveTextToFile(const char *filename, char *text, int length) {
-    FILE *file = fopen(filename, "w");
-    if (file == NULL) {
-        perror("Error al abrir el archivo");
-        return 0;
-    }
+  FILE *file = fopen(filename, "w");
+  if (file == NULL) {
+    perror("Error al abrir el archivo");
+    return 0;
+  }
 
-    // Escribe el contenido del texto desencriptado en el archivo
-    fwrite(text, sizeof(char), length, file);
+  // Escribe el contenido del texto en el archivo
+  fwrite(text, 1, length, file);
+  fclose(file);
 
-    fclose(file);
-
-    return 1;
+  return 1;
 }
-
-
 
 unsigned char cipher[] = {108, 245, 65, 63, 125, 200, 150, 66, 17, 170, 207, 170, 34, 31, 70, 215, 0};
 
@@ -171,25 +167,19 @@ int main(int argc, char *argv[]){
   if (id == 0) {
     // Carga el texto desde un archivo (por ejemplo, "input.txt")
     if (!loadTextFromFile("input.txt", &text, &textLength)) {
-        MPI_Finalize();
-        return 1;
+      MPI_Finalize();
+      return 1;
     }
 
-    char *encryptedText = (char *)malloc(textLength); // Crear una copia del texto
-    memcpy(encryptedText, text, textLength);
-
-    encrypt(encryptionKey, encryptedText, textLength);
+    encrypt(encryptionKey, text, textLength);
 
     // Guarda el texto encriptado en un archivo (por ejemplo, "encrypted.txt")
-    if (!saveTextToFile("encrypted.txt", encryptedText, textLength)) {
-        free(text);
-        free(encryptedText); // Liberar la memoria de la copia
-        MPI_Finalize();
-        return 1;
+    if (!saveTextToFile("encrypted.txt", text, textLength)) {
+      free(text);
+      MPI_Finalize();
+      return 1;
     }
-    free(encryptedText); // Liberar la memoria de la copia
-  } 
-
+  }
 
   // Difunde el texto encriptado a todos los nodos
   MPI_Bcast(&textLength, 1, MPI_INT, 0, comm);
@@ -217,45 +207,18 @@ int main(int argc, char *argv[]){
 
   if (id == 0) {
     MPI_Wait(&req, &st);
-    char *decryptedText = (char *)malloc(textLength); // Crear una copia del texto desencriptado
-    memcpy(decryptedText, text, textLength);
-    decrypt(found, decryptedText, textLength);
+    decrypt(found, text, textLength);
 
-    // Imprime la copia del texto desencriptado y la clave de encriptación
-    // printf("%li %s\n", found, decryptedText);
+    // Imprime el texto desencriptado y la clave de encriptación
     printf("Tiempo de ejecución: %f segundos\n", end_time - start_time);
 
     // Guarda el texto desencriptado en un archivo (por ejemplo, "decrypted.txt")
-    if (!saveTextToFile("decrypted.txt", decryptedText, textLength)) {
-        free(text);
-        free(decryptedText); // Liberar la memoria de la copia
-        MPI_Finalize();
-        return 1;
+    if (!saveTextToFile("decrypted.txt", text, textLength)) {
+      free(text);
+      MPI_Finalize();
+      return 1;
     }
-    
-    // Compara el texto original con el texto del archivo "decrypted.txt"
-      char *inputText;
-      int inputLength;
-      if (!loadTextFromFile("input.txt", &inputText, &inputLength)) {
-          free(text);
-          free(decryptedText);
-          MPI_Finalize();
-          return 1;
-      }
-
-      if (!saveTextToFile("decrypted.txt", inputText, inputLength)) {
-          free(text);
-          free(decryptedText);
-          free(inputText);
-          MPI_Finalize();
-          return 1;
-      }
-      free(inputText); // Liberar la memoria del texto original
-      free(decryptedText); // Liberar la memoria de la copia
-
-
   }
-
 
   free(text);
 
