@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <openssl/des.h>
 
+// Definir una función para desencriptar
 void decrypt(long key, char *ciph, int len){
   DES_cblock key_block;
   DES_key_schedule schedule;
@@ -26,22 +27,30 @@ void decrypt(long key, char *ciph, int len){
   // Crea un horario de clave DES basado en la clave
   DES_set_key_unchecked(&key_block, &schedule);
   // Realiza una desencriptación DES en el texto cifrado
-  DES_ecb_encrypt((DES_cblock *)ciph, (DES_cblock *)ciph, &schedule, DES_DECRYPT);
+  for (int i = 0; i < len; i += 8) {
+    DES_ecb_encrypt((DES_cblock *)(ciph + i), (DES_cblock *)(ciph + i), &schedule, DES_DECRYPT);
+  }
 }
 
+// Definir una función para encriptar
 void encrypt(long key, char *ciph, int len){
-  DES_key_schedule schedule;
   DES_cblock key_block;
+  DES_key_schedule schedule;
 
+  // Inicializa el bloque de clave DES con ceros
+  memset(key_block, 0, sizeof(DES_cblock));
   // Copia la clave proporcionada en el bloque de clave
-  memcpy(key_block, &key, sizeof(key));
+  memcpy(key_block, &key, sizeof(long));
+  
   // Crea un horario de clave DES basado en la clave
   DES_set_key_unchecked(&key_block, &schedule);
   // Realiza una encriptación DES en el texto
-  DES_ecb_encrypt((DES_cblock *)ciph, (DES_cblock *)ciph, &schedule, DES_ENCRYPT);
+  for (int i = 0; i < len; i += 8) {
+    DES_ecb_encrypt((DES_cblock *)(ciph + i), (DES_cblock *)(ciph + i), &schedule, DES_ENCRYPT);
+  }
 }
 
-char search[] = "es una prueba de";
+char search[] = "the";
 
 int tryKey(long key, char *ciph, int len){
   char temp[len+1];
