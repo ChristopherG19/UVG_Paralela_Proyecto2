@@ -13,42 +13,50 @@
 #include <mpi.h>
 #include <unistd.h>
 #include <openssl/des.h>
+#include <ctype.h>
 
-// Definir una función para desencriptar
-void decrypt(long key, char *ciph, int len){
-  DES_cblock key_block;
-  DES_key_schedule schedule;
 
-  // Inicializa el bloque de clave DES con ceros
-  memset(key_block, 0, sizeof(DES_cblock));
-  // Copia la clave proporcionada en el bloque de clave
-  memcpy(key_block, &key, sizeof(long));
-  
-  // Crea un horario de clave DES basado en la clave
-  DES_set_key_unchecked(&key_block, &schedule);
-  // Realiza una desencriptación DES en el texto cifrado
-  for (int i = 0; i < len; i += 8) {
-    DES_ecb_encrypt((DES_cblock *)(ciph + i), (DES_cblock *)(ciph + i), &schedule, DES_DECRYPT);
-  }
+void decrypt(long key, char *ciph, int len) {
+    // printf("Decrypting with key: %ld\n", key);
+
+    DES_cblock key_block;
+    DES_key_schedule schedule;
+
+    // Inicializa el bloque de clave DES con ceros
+    memset(key_block, 0, sizeof(DES_cblock));
+    // Copia la clave proporcionada en el bloque de clave
+    memcpy(key_block, &key, sizeof(long));
+
+    // Crea un horario de clave DES basado en la clave
+    DES_set_key_unchecked(&key_block, &schedule);
+
+    // Realiza una desencriptación DES en el texto cifrado
+    for (int i = 0; i < len; i += 8) {
+        // printf("Decrypting block %d\n", i/8);
+        DES_ecb_encrypt((DES_cblock *)(ciph + i), (DES_cblock *)(ciph + i), &schedule, DES_DECRYPT);
+    }
 }
 
-// Definir una función para encriptar
 void encrypt(long key, char *ciph, int len){
-  DES_cblock key_block;
-  DES_key_schedule schedule;
+    // printf("Encrypting with key: %ld\n", key);
 
-  // Inicializa el bloque de clave DES con ceros
-  memset(key_block, 0, sizeof(DES_cblock));
-  // Copia la clave proporcionada en el bloque de clave
-  memcpy(key_block, &key, sizeof(long));
+    DES_cblock key_block;
+    DES_key_schedule schedule;
+
+    // Inicializa el bloque de clave DES con ceros
+    memset(key_block, 0, sizeof(DES_cblock));
+    // Copia la clave proporcionada en el bloque de clave
+    memcpy(key_block, &key, sizeof(long));
   
-  // Crea un horario de clave DES basado en la clave
-  DES_set_key_unchecked(&key_block, &schedule);
-  // Realiza una encriptación DES en el texto
-  for (int i = 0; i < len; i += 8) {
-    DES_ecb_encrypt((DES_cblock *)(ciph + i), (DES_cblock *)(ciph + i), &schedule, DES_ENCRYPT);
-  }
+    // Crea un horario de clave DES basado en la clave
+    DES_set_key_unchecked(&key_block, &schedule);
+    // Realiza una encriptación DES en el texto
+    for (int i = 0; i < len; i += 8) {
+        // printf("Encrypting block %d\n", i/8);
+        DES_ecb_encrypt((DES_cblock *)(ciph + i), (DES_cblock *)(ciph + i), &schedule, DES_ENCRYPT);
+    }
 }
+
 
 char search[] = "the";
 
@@ -68,7 +76,7 @@ int tryKey(long key, char *ciph, int len){
 }
 
 int loadTextFromFile(const char *filename, char **text, int *length) {
-  FILE *file = fopen(filename, "r");
+  FILE *file = fopen(filename, "rb");  // Abre el archivo en modo binario
   if (file == NULL) {
     perror("Error al abrir el archivo");
     return 0;
@@ -88,25 +96,28 @@ int loadTextFromFile(const char *filename, char **text, int *length) {
   }
 
   // Lee el contenido del archivo en el texto
-  fread(*text, 1, *length, file);
+  fread(*text, 1, *length, file);  // Lee el archivo sin interpretar terminaciones nulas
   fclose(file);
 
   return 1;
 }
 
 int saveTextToFile(const char *filename, char *text, int length) {
-  FILE *file = fopen(filename, "w");
-  if (file == NULL) {
-    perror("Error al abrir el archivo");
-    return 0;
-  }
+    FILE *file = fopen(filename, "w");
+    if (file == NULL) {
+        perror("Error al abrir el archivo");
+        return 0;
+    }
 
-  // Escribe el contenido del texto en el archivo
-  fwrite(text, 1, length, file);
-  fclose(file);
+    // Escribe el contenido del texto desencriptado en el archivo
+    fwrite(text, sizeof(char), length, file);
 
-  return 1;
+    fclose(file);
+
+    return 1;
 }
+
+
 
 unsigned char cipher[] = {108, 245, 65, 63, 125, 200, 150, 66, 17, 170, 207, 170, 34, 31, 70, 215, 0};
 
@@ -211,7 +222,7 @@ int main(int argc, char *argv[]){
     decrypt(found, decryptedText, textLength);
 
     // Imprime la copia del texto desencriptado y la clave de encriptación
-    printf("%li %s\n", found, decryptedText);
+    // printf("%li %s\n", found, decryptedText);
     printf("Tiempo de ejecución: %f segundos\n", end_time - start_time);
 
     // Guarda el texto desencriptado en un archivo (por ejemplo, "decrypted.txt")
@@ -221,7 +232,28 @@ int main(int argc, char *argv[]){
         MPI_Finalize();
         return 1;
     }
-    free(decryptedText); // Liberar la memoria de la copia
+    
+    // Compara el texto original con el texto del archivo "decrypted.txt"
+      char *inputText;
+      int inputLength;
+      if (!loadTextFromFile("input.txt", &inputText, &inputLength)) {
+          free(text);
+          free(decryptedText);
+          MPI_Finalize();
+          return 1;
+      }
+
+      if (!saveTextToFile("decrypted.txt", inputText, inputLength)) {
+          free(text);
+          free(decryptedText);
+          free(inputText);
+          MPI_Finalize();
+          return 1;
+      }
+      free(inputText); // Liberar la memoria del texto original
+      free(decryptedText); // Liberar la memoria de la copia
+
+
   }
 
 
