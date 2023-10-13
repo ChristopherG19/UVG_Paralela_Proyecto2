@@ -3,7 +3,7 @@
   Computación paralela y distribuida
   Proyecto#2
 
-  - Compilación: mpicc -o bruteforce bruteforce.c -lcrypto -lssl
+  - Compilación: mpicc -o bruteforce bruteforce.c -lcrypto -lssl -w
   - Ejecución: mpirun -np 4 ./bruteforce -k <llave>
 */
 
@@ -14,7 +14,7 @@
 #include <unistd.h>
 #include <openssl/des.h>
 #include <ctype.h>
-
+#include <time.h>
 
 void decrypt(long key, char *ciph, int len) {
     // printf("Decrypting with key: %ld\n", key);
@@ -115,8 +115,6 @@ int saveTextToFile(const char *filename, char *text, int length) {
   return 1;
 }
 
-unsigned char cipher[] = {108, 245, 65, 63, 125, 200, 150, 66, 17, 170, 207, 170, 34, 31, 70, 215, 0};
-
 int main(int argc, char *argv[]){
   int N, id;
   long upper = (1L << 56); // Límite superior para claves DES: 2^56
@@ -124,13 +122,13 @@ int main(int argc, char *argv[]){
   MPI_Status st;
   MPI_Request req;
   int flag;
-  int ciphlen = strlen(cipher);
   MPI_Comm comm = MPI_COMM_WORLD;
 
   MPI_Init(NULL, NULL);
   MPI_Comm_size(comm, &N);
   MPI_Comm_rank(comm, &id);
 
+  clock_t start_time_C, end_time_C;
   double start_time, end_time; // Variables para medir el tiempo de ejecución
   long encryptionKey = 123456L; // Valor predeterminado para la clave de encriptación
 
@@ -148,6 +146,8 @@ int main(int argc, char *argv[]){
         exit(1);
     }
   }
+
+  start_time_C = clock();
 
   // Inicia el contador de tiempo
   start_time = MPI_Wtime();
@@ -202,15 +202,22 @@ int main(int argc, char *argv[]){
     }
   }
 
-  // Termina el contador de tiempo
-  end_time = MPI_Wtime();
-
   if (id == 0) {
     MPI_Wait(&req, &st);
     decrypt(found, text, textLength);
 
+    // Termina el contador de tiempo
+    end_time = MPI_Wtime();
+    end_time_C = clock();
+
     // Imprime el texto desencriptado y la clave de encriptación
-    printf("Tiempo de ejecución: %f segundos\n", end_time - start_time);
+    printf("Tiempo de ejecución MPI: %f segundos\n", end_time - start_time);
+
+    // Calcula el tiempo transcurrido
+    double execution_time = (double)(end_time_C - start_time_C) / CLOCKS_PER_SEC;
+
+    // Imprime el tiempo de ejecución en segundos
+    printf("Tiempo de ejecución: %f segundos\n", execution_time);
 
     // Guarda el texto desencriptado en un archivo (por ejemplo, "decrypted.txt")
     if (!saveTextToFile("decrypted.txt", text, textLength)) {
