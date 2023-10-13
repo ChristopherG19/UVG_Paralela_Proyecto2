@@ -164,10 +164,11 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    end_time = MPI_Wtime();
 
     if (id == 0) {
         decrypt(found, text, textLength);
+        // Termina el contador de tiempo
+        end_time = MPI_Wtime();
         printf("Tiempo de ejecución: %f segundos\n", end_time - start_time);
         if (!saveTextToFile("DecryptedNaiveV1.txt", text, textLength)) {
             free(text);
