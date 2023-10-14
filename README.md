@@ -38,3 +38,10 @@ Ejecución: `mpirun -np 4 ./bruteforce -k <llave>`
 - [`secuencial_des.c`](https://github.com/ChristopherG19/UVG_Paralela_Proyecto2/blob/main/secuencial_des.c) <br>
 Compilación: `gcc -o secuencial_des secuencial_des.c -lcrypto -lssl -w` <br>
 Ejecución: `./secuencial_des -k <llave>`
+
+## ¿Qué se debe tomar en cuenta?
+- Es importante modificar los siguientes elementos:
+  - En el archivo input.txt es necesario ingresar el input deseado
+  - La llave se debe ingresar en la línea de comandos, sino tomará un valor predeterminado (42)
+  - Es importante modificar el valor de la variable `search` en el archivo ejecutado por la palabra o frase buscada.
+  - En el comando de ejecución el 4 indica la cantidad de procesadores a utilizar por MPI
