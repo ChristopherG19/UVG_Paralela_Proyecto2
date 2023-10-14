@@ -3,8 +3,8 @@
   Computación paralela y distribuida
   Proyecto#2
 
-  - Compilación: mpicc -o bruteforce bruteforce.c -lcrypto -lssl -w
-  - Ejecución: mpirun -np 4 ./bruteforce -k <llave>
+  - Compilación: mpicc -o NaiveV1 NaiveV1.c -lcrypto -lssl -w
+  - Ejecución: mpirun -np 4 ./NaiveV1 -k <llave>
 */
 
 #include <string.h>
@@ -57,7 +57,7 @@ void encrypt(long key, char *ciph, int len){
     }
 }
 
-char search[] = "es una prueba de";
+char search[] = "play";
 
 int tryKey(long key, char *ciph, int len){
   char temp[len+1];
@@ -115,9 +115,10 @@ int saveTextToFile(const char *filename, char *text, int length) {
   return 1;
 }
 
-int binarySearch(long lower, long upper, char *ciph, int len) {
+int binarySearch(long lower, long upper, char *ciph, int len, int id) {
     long left = lower;
     long right = upper;
+    long found = 0; // Declaración de la variable found
 
     while (left <= right) {
         long mid = left + (right - left) / 2;
@@ -127,7 +128,6 @@ int binarySearch(long lower, long upper, char *ciph, int len) {
         }
 
         if (id == 0) {
-            // Actualiza el valor de 'found' en todos los procesos
             MPI_Bcast(&found, 1, MPI_LONG, 0, MPI_COMM_WORLD);
         }
 
@@ -141,6 +141,8 @@ int binarySearch(long lower, long upper, char *ciph, int len) {
         } else {
             return found;
         }
+
+        return 0;
     }
 
     return 0;
@@ -222,7 +224,7 @@ int main(int argc, char *argv[]){
     long found = 0;
 
     if (id == 0) {
-        found = binarySearch(mylower, myupper, text, textLength);
+        found = binarySearch(mylower, myupper, text, textLength, id);
     }
 
     if (id == 0) {
