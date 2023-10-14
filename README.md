@@ -38,6 +38,13 @@ Ejecución: `mpirun -np 4 ./bruteforce -k <llave>`
 - [`secuencial_des.c`](https://github.com/ChristopherG19/UVG_Paralela_Proyecto2/blob/main/secuencial_des.c) <br>
 Compilación: `gcc -o secuencial_des secuencial_des.c -lcrypto -lssl -w` <br>
 Ejecución: `./secuencial_des -k <llave>`
+- [`NaiveV1.c`](https://github.com/ChristopherG19/UVG_Paralela_Proyecto2/blob/main/NaiveV1.c) <br>
+Compilación: `mpicc -o NaiveV1 NaiveV1.c -lcrypto -lssl -w` <br>
+Ejecución: `mpirun -np 4 ./NaiveV1 -k <llave>`
+- [`NaiveV2.c`](https://github.com/ChristopherG19/UVG_Paralela_Proyecto2/blob/main/NaiveV2.c) <br>
+Compilación: `mpicc -o NaiveV2 NaiveV2.c -lcrypto -lssl -w` <br>
+Ejecución: `mpirun -np 4 ./NaiveV2 -k <llave>`
+
 
 ## ¿Qué se debe tomar en cuenta?
 - Es importante modificar los siguientes elementos:
