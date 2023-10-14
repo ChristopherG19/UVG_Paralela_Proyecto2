@@ -1,3 +1,12 @@
+/*
+  Universidad del Valle de Guatemala
+  Computación paralela y distribuida
+  Proyecto #2
+
+  - Compilación: mpicc -o NaiveV2 NaiveV2.c -lcrypto -lssl -w
+  - Ejecución: mpirun -np 4 ./NaiveV2 -k <llave>
+*/
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,7 +47,7 @@ void encrypt(long key, char *ciph, int len){
     }
 }
 
-char search[] = "play";
+char search[] = "optim";
 
 int loadTextFromFile(const char *filename, char **text, int *length) {
   FILE *file = fopen(filename, "r");

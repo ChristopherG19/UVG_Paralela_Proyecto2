@@ -3,7 +3,7 @@
   Computación paralela y distribuida
   Proyecto #2
 
-  - Compilación: mpicc -o NaiveV1 NaiveV1.c -lcrypto -lssl
+  - Compilación: mpicc -o NaiveV1 NaiveV1.c -lcrypto -lssl -w
   - Ejecución: mpirun -np 4 ./NaiveV1 -k <llave>
 */
 
