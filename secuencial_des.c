@@ -42,7 +42,7 @@ void encrypt(long key, char *ciph, int len) {
     }
 }
 
-char search[] = "es una prueba de";
+char search[] = "thing";
 
 int tryKey(long key, char *ciph, int len) {
     char temp[len + 1];
@@ -124,6 +124,13 @@ int main(int argc, char *argv[]) {
 
     if (!loadTextFromFile("input.txt", &text, &textLength)) {
         return 1;
+    }
+
+    // aplicar padding
+    int padding = 8 - (textLength % 8);
+    if (padding < 8) {
+        memset(text + textLength, padding, padding);
+        textLength += padding;
     }
 
     encrypt(encryptionKey, text, textLength);
